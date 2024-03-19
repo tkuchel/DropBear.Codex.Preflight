@@ -9,7 +9,8 @@ using MessagePipe;
 namespace DropBear.Codex.Preflight.Services;
 
 /// <summary>
-///     Manages the coordination and configuration of multiple preflight sub-managers.
+///     Manages the coordination and configuration of multiple preflight sub-managers, monitoring their states and
+///     configurations.
 /// </summary>
 public class MainPreflightManager : IMainPreflightManager, IDisposable
 {
@@ -18,60 +19,62 @@ public class MainPreflightManager : IMainPreflightManager, IDisposable
     private readonly ConcurrentDictionary<string, TaskState> _subManagerStates = new();
     private readonly IDisposable _subscription;
 
-    /// <summary>
-    ///     Initializes a new instance of the MainPreflightManager class, subscribing to state change messages.
-    /// </summary>
-    /// <param name="subscriber">The subscriber to SubManagerStateChange messages.</param>
     public MainPreflightManager(ISubscriber<SubManagerStateChange> subscriber)
     {
         _subscription = subscriber.Subscribe(OnSubManagerStateChange);
     }
 
-    /// <summary>
-    ///     Disposes of resources used by the MainPreflightManager.
-    /// </summary>
     public void Dispose()
     {
         _subscription.Dispose();
     }
 
-    /// <summary>
-    ///     Registers a sub-manager to be coordinated by this main manager and configures it with the default configuration.
-    /// </summary>
-    /// <param name="subManager">The sub-manager to register.</param>
     public void RegisterSubManager(IPreflightSubManager subManager)
     {
-        ArgumentNullException.ThrowIfNull(subManager, nameof(subManager));
+        ArgumentNullException.ThrowIfNull(subManager);
         subManager.Configure(_defaultConfig);
         _subManagers.Add(subManager);
+        // Assuming an initial state of Pending for new sub-managers
+        _subManagerStates[subManager.Id] = TaskState.Pending;
     }
 
-    /// <summary>
-    ///     Updates the default configuration settings for all sub-managers and their associated tasks.
-    /// </summary>
-    /// <param name="updateAction">An action to modify the configuration settings.</param>
     public void UpdateDefaultConfig(Action<PreflightConfig> updateAction)
     {
-        ArgumentNullException.ThrowIfNull(updateAction, nameof(updateAction));
-        updateAction(_defaultConfig);
+        ArgumentNullException.ThrowIfNull(updateAction);
+
+        // Validate configuration before applying
+        var tempConfig = new PreflightConfig();
+        updateAction(tempConfig);
+        ValidateConfig(tempConfig); // Implement this method based on your configuration validation logic
+
+        _defaultConfig.CopyFrom(tempConfig); // Assuming a method to copy settings from one config to another
         foreach (var subManager in _subManagers) subManager.Configure(_defaultConfig);
     }
 
-    /// <summary>
-    ///     Retrieves the current states of all registered sub-managers.
-    /// </summary>
-    /// <returns>A read-only dictionary with sub-manager IDs as keys and their states as values.</returns>
     public IReadOnlyDictionary<string, TaskState> GetSubManagerStates()
     {
         return new ReadOnlyDictionary<string, TaskState>(_subManagerStates);
     }
 
-    /// <summary>
-    ///     Handles the state change of a sub-manager by updating the internal state tracking in a thread-safe manner.
-    /// </summary>
-    /// <param name="change">The state change message.</param>
     private void OnSubManagerStateChange(SubManagerStateChange change)
     {
         _subManagerStates.AddOrUpdate(change.SubManagerId, change.State, (id, existingVal) => change.State);
+
+        // React to significant state changes
+        ReactToStateChange(change.SubManagerId, change.State);
+    }
+
+    private static void ReactToStateChange(string subManagerId, TaskState newState)
+    {
+        // Placeholder for logic to react to state changes, e.g., logging or triggering further actions
+        Console.WriteLine($"Sub-manager {subManagerId} changed state to {newState}.");
+    }
+
+    private static void ValidateConfig(PreflightConfig config)
+    {
+        // Implement validation logic here
+        // Throw an exception if the configuration is not valid
+        if (config.MaxRetryAttempts < 1)
+            throw new ArgumentException("MaxRetryAttempts must be at least 1", nameof(config.MaxRetryAttempts));
     }
 }

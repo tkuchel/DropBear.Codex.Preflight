@@ -8,6 +8,7 @@
 
     <ItemGroup>
       <PackageReference Include="MessagePipe" Version="1.7.4" />
+      <PackageReference Include="ZLogger" Version="2.4.1" />
     </ItemGroup>
 
 </Project>

@@ -7,6 +7,8 @@ namespace DropBear.Codex.Preflight.Interfaces;
 /// </summary>
 public interface IPreflightSubManager
 {
+    string Id { get; }
+    
     /// <summary>
     ///     Adds a preflight task to the sub-manager.
     /// </summary>

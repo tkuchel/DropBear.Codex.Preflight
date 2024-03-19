@@ -3,32 +3,43 @@ using DropBear.Codex.Preflight.Models;
 using DropBear.Codex.Preflight.Services;
 using MessagePipe;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using ZLogger;
 
 namespace DropBear.Codex.Preflight;
 
 public static class PreflightCheckServiceExtensions
 {
-    /// <summary>
-    /// Adds services required for preflight checks to the specified IServiceCollection.
-    /// </summary>
-    /// <param name="services">The IServiceCollection to add services to.</param>
-    /// <returns>The IServiceCollection so that additional calls can be chained.</returns>
     public static IServiceCollection AddPreflightChecks(this IServiceCollection services)
     {
-        // Ensure all necessary interfaces and their implementations are registered
         services.AddSingleton<MainPreflightManager>();
         services.AddSingleton<IPreflightSubManager, PreflightSubManager>();
         services.AddSingleton<IPreflightTask, PreflightTask>();
 
-        // Add MessagePipe with default configuration or customize as needed
         services.AddMessagePipe(options =>
         {
             // Customize MessagePipe options if necessary
         });
 
-        // Note: If ZLogger is being used or any other logging, ensure it's configured appropriately here
-        // services.AddZLoggerConsole();
+        // Check if an ILogger is already registered and only add ZLogger if not
+        if (services.All(x => x.ServiceType != typeof(ILogger)))
+            // Example of adding ZLogger assuming it provides or works with Microsoft.Extensions.Logging.ILogger
+            // Adjust this as necessary based on your setup and ZLogger configuration.
+            services.AddLogging(builder =>
+            {
+                builder.ClearProviders(); // Optional: Clear existing providers
+                builder.AddZLoggerConsole();
+            });
 
+        AddLoggingAdapter(services);
+
+        return services;
+    }
+
+    private static IServiceCollection AddLoggingAdapter(this IServiceCollection services)
+    {
+        // Assuming `AddPreflightChecks` is already called and potentially registers ZLogger or another ILogger.
+        services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
         return services;
     }
 }
