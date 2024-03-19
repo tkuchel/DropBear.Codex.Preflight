@@ -4,7 +4,23 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <Version>1.0.0</Version>
+        <Title>DropBear.Codex.Preflight</Title>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Authors>Terrence Kuchel (DropBear)</Authors>
+        <Description>DropBear Codex Preflight is a .NET library designed to streamline and enhance the pre-launch checks and diagnostics for .NET applications. With seamless integration for ASP.NET Core, it provides a robust set of tools for performance monitoring, configuration verification, and dependency checks, ensuring your application is launch-ready.</Description>
+        <Copyright>2024 Terrence Kuchel</Copyright>
+        <PackageProjectUrl>https://github.com/tkuchel/DropBear.Codex.Preflight</PackageProjectUrl>
+        <PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/tkuchel/DropBear.Codex.Preflight</RepositoryUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <RepositoryType>Git</RepositoryType>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="MessagePipe" Version="1.7.4" />
