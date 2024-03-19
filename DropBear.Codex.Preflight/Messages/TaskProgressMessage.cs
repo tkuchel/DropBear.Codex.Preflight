@@ -10,7 +10,7 @@ public class TaskProgressMessage
     public TaskProgressMessage(string taskId, double progress)
     {
         TaskId = taskId ?? throw new ArgumentNullException(nameof(taskId));
-        Progress = progress >= 0 && progress <= 1
+        Progress = progress is >= 0 and <= 1
             ? progress
             : throw new ArgumentOutOfRangeException(nameof(progress), "Progress must be between 0 and 1.");
     }

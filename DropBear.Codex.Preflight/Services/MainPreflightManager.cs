@@ -58,7 +58,7 @@ public class MainPreflightManager : IMainPreflightManager, IDisposable
 
     private void OnSubManagerStateChange(SubManagerStateChange change)
     {
-        _subManagerStates.AddOrUpdate(change.SubManagerId, change.State, (id, existingVal) => change.State);
+        _subManagerStates.AddOrUpdate(change.SubManagerId, change.State, (_, _) => change.State);
 
         // React to significant state changes
         ReactToStateChange(change.SubManagerId, change.State);

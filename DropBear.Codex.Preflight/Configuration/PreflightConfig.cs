@@ -5,27 +5,21 @@ namespace DropBear.Codex.Preflight.Configuration;
 /// </summary>
 public class PreflightConfig
 {
-    public PreflightConfig()
-    {
-        MaxRetryAttempts = 3;
-        RetryDelay = TimeSpan.FromSeconds(1);
-        TaskTimeout = TimeSpan.FromSeconds(30);
-    }
-
     /// <summary>
     ///     Gets the maximum number of retry attempts for a task. Must be non-negative.
     /// </summary>
-    public int MaxRetryAttempts { get; private set; }
+    public int MaxRetryAttempts { get; private set; } = 3;
 
     /// <summary>
     ///     Gets the delay between retry attempts. Must be non-negative.
     /// </summary>
-    public TimeSpan RetryDelay { get; private set; }
+    public TimeSpan RetryDelay { get; private set; } = TimeSpan.FromSeconds(1);
 
     /// <summary>
     ///     Gets or sets the maximum timeout for a task to complete. Must be positive.
     /// </summary>
-    public TimeSpan TaskTimeout { get; private set; }
+    // ReSharper disable once MemberCanBePrivate.Global
+    public TimeSpan TaskTimeout { get; private set; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
     ///     Updates the configuration settings based on another PreflightConfig instance.

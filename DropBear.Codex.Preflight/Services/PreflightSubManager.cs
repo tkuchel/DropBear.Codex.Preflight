@@ -4,7 +4,6 @@ using DropBear.Codex.Preflight.Enums;
 using DropBear.Codex.Preflight.Interfaces;
 using DropBear.Codex.Preflight.Messages;
 using MessagePipe;
-using Microsoft.Extensions.Logging;
 
 namespace DropBear.Codex.Preflight.Services;
 
@@ -15,13 +14,12 @@ namespace DropBear.Codex.Preflight.Services;
 public class PreflightSubManager : IPreflightSubManager
 {
     private readonly ISubscriber<TaskErrorMessage> _errorSubscriber;
-    public string Id { get; }
+    private readonly IAppLogger<PreflightSubManager> _logger;
     private readonly ISubscriber<TaskProgressMessage> _progressSubscriber;
     private readonly IPublisher<SubManagerStateChange> _publisher;
     private readonly ISubscriber<TaskStateMessage> _stateSubscriber;
     private readonly ConcurrentQueue<IPreflightTask> _tasks = new();
     private PreflightConfig? _config;
-    private readonly IAppLogger<PreflightSubManager> _logger;
 
     public PreflightSubManager(
         IPublisher<SubManagerStateChange> publisher,
@@ -37,10 +35,12 @@ public class PreflightSubManager : IPreflightSubManager
         _progressSubscriber = progressSubscriber ?? throw new ArgumentNullException(nameof(progressSubscriber));
         _errorSubscriber = errorSubscriber ?? throw new ArgumentNullException(nameof(errorSubscriber));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        
+
         SubscribeToMessages();
         ChangeState(TaskState.Pending); // Initialize state to Pending upon creation
     }
+
+    public string Id { get; }
 
     public void AddTask(IPreflightTask task)
     {
@@ -55,10 +55,7 @@ public class PreflightSubManager : IPreflightSubManager
         _config = config ?? throw new ArgumentNullException(nameof(config));
 
         // Apply the configuration to all tasks in the sub-manager
-        foreach (var task in _tasks)
-        {
-            task.ApplyConfig(config);
-        }
+        foreach (var task in _tasks) task.ApplyConfig(config);
     }
 
     public async Task<bool> ExecuteTasksAsync(CancellationToken cancellationToken)
@@ -129,7 +126,7 @@ public class PreflightSubManager : IPreflightSubManager
     ///     Changes the state of the sub-manager, publishing the change to interested parties.
     /// </summary>
     /// <param name="newState">The new state of the sub-manager.</param>
-    public void ChangeState(TaskState newState)
+    private void ChangeState(TaskState newState)
     {
         _publisher.Publish(new SubManagerStateChange(Id, newState));
     }

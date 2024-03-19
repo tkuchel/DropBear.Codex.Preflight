@@ -2,14 +2,11 @@ using DropBear.Codex.Preflight.Interfaces;
 using Microsoft.Extensions.Logging;
 using ZLogger;
 
-public class AppLogger<T> : IAppLogger<T>
-{
-    private readonly ILogger<T> _logger;
+namespace DropBear.Codex.Preflight.Loggers;
 
-    public AppLogger(ILogger<T> logger)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
+public class AppLogger<T>(ILogger<T> logger) : IAppLogger<T>
+{
+    private readonly ILogger<T> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     /// <summary>
     ///     Logs a debug message.
@@ -67,9 +64,9 @@ public class AppLogger<T> : IAppLogger<T>
         LogWithLevel(LogLevel.Critical, message, exception);
     }
 
-    private void LogWithLevel(LogLevel level, string message, Exception exception = null)
+    private void LogWithLevel(LogLevel level, string message, Exception? exception = default)
     {
-        if (_logger is ILogger<ZLogger.ZLoggerLogger>)
+        if (_logger is ILogger<ZLoggerLogger>)
             // Call the appropriate ZLog method based on the LogLevel
             switch (level)
             {

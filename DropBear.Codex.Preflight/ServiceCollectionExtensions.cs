@@ -1,4 +1,5 @@
 ﻿using DropBear.Codex.Preflight.Interfaces;
+using DropBear.Codex.Preflight.Loggers;
 using DropBear.Codex.Preflight.Models;
 using DropBear.Codex.Preflight.Services;
 using MessagePipe;
@@ -16,7 +17,7 @@ public static class PreflightCheckServiceExtensions
         services.AddSingleton<IPreflightSubManager, PreflightSubManager>();
         services.AddSingleton<IPreflightTask, PreflightTask>();
 
-        services.AddMessagePipe(options =>
+        services.AddMessagePipe(_ =>
         {
             // Customize MessagePipe options if necessary
         });
@@ -31,9 +32,7 @@ public static class PreflightCheckServiceExtensions
                 builder.AddZLoggerConsole();
             });
 
-        AddLoggingAdapter(services);
-
-        return services;
+        return AddLoggingAdapter(services);
     }
 
     private static IServiceCollection AddLoggingAdapter(this IServiceCollection services)
