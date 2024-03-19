@@ -1,0 +1,72 @@
+name: .NET CI and NuGet Management
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: [ master ]
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-and-manage-nuget:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --no-build --verbosity normal --configuration Release
+
+      - name: Pack
+        run: dotnet pack --no-build --output ./nuget-packages --configuration Release
+
+      - name: Archive NuGet packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./nuget-packages/*.nupkg
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          gh release create ${{ github.ref_name }} --title "${{ github.ref_name }}" --notes "Release ${{ github.ref_name }}"
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Artifacts to Release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          Get-ChildItem ./nuget-packages/*.nupkg -Name | ForEach-Object {
+            gh release upload ${{ github.ref_name }} "./nuget-packages/$_" --clobber
+          }
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish NuGet Package
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          Get-ChildItem ./nuget-packages/*.nupkg -Name | ForEach-Object {
+            dotnet nuget push "./nuget-packages/$_" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+          }
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
