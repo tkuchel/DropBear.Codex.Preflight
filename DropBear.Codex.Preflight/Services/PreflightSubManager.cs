@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using DropBear.Codex.AppLogger.Interfaces;
 using DropBear.Codex.Preflight.Configuration;
 using DropBear.Codex.Preflight.Enums;
 using DropBear.Codex.Preflight.Interfaces;
@@ -77,8 +78,6 @@ public class PreflightSubManager : IPreflightSubManager
 
     private void SubscribeToMessages()
     {
-        // Simplified example of logging or handling task messages.
-        // This placeholder setup should be replaced with actual logging or message handling logic as needed.
         _stateSubscriber.Subscribe(message =>
         {
             _logger.LogInformation($"Task {message.TaskId} changed state to {message.State}.");
