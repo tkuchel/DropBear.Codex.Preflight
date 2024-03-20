@@ -11,9 +11,9 @@ public static class PreflightCheckServiceExtensions
 {
     public static IServiceCollection AddPreflightChecks(this IServiceCollection services)
     {
-        services.AddSingleton<MainPreflightManager>();
-        services.AddSingleton<IPreflightSubManager, PreflightSubManager>();
-        services.AddSingleton<IPreflightTask, PreflightTask>();
+        services.AddSingleton<IMainPreflightManager,MainPreflightManager>();
+        services.AddScoped<IPreflightSubManager,PreflightSubManager>();
+        services.AddTransient<IPreflightTask, PreflightTask>();
 
         services.AddMessagePipe(_ =>
         {
