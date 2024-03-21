@@ -1,6 +1,5 @@
 ﻿using DropBear.Codex.AppLogger.Extensions;
 using DropBear.Codex.Preflight.Interfaces;
-using DropBear.Codex.Preflight.Models;
 using DropBear.Codex.Preflight.Services;
 using MessagePipe;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,9 +10,8 @@ public static class PreflightCheckServiceExtensions
 {
     public static IServiceCollection AddPreflightChecks(this IServiceCollection services)
     {
-        services.AddSingleton<IMainPreflightManager,MainPreflightManager>();
-        services.AddScoped<IPreflightSubManager,PreflightSubManager>();
-        services.AddTransient<IPreflightTask, PreflightTask>();
+        services.AddSingleton<IMainPreflightManager, MainPreflightManager>();
+        services.AddScoped<IPreflightSubManager>();
 
         services.AddMessagePipe(_ =>
         {

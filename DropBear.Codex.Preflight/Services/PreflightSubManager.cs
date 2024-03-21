@@ -24,14 +24,13 @@ public class PreflightSubManager : IPreflightSubManager
 
     public PreflightSubManager(
         IPublisher<SubManagerStateChange> publisher,
-        string id,
         ISubscriber<TaskStateMessage> stateSubscriber,
         ISubscriber<TaskProgressMessage> progressSubscriber,
         ISubscriber<TaskErrorMessage> errorSubscriber,
         IAppLogger<PreflightSubManager> logger)
     {
         _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
-        Id = id ?? throw new ArgumentNullException(nameof(id));
+        Id = Guid.NewGuid().ToString();
         _stateSubscriber = stateSubscriber ?? throw new ArgumentNullException(nameof(stateSubscriber));
         _progressSubscriber = progressSubscriber ?? throw new ArgumentNullException(nameof(progressSubscriber));
         _errorSubscriber = errorSubscriber ?? throw new ArgumentNullException(nameof(errorSubscriber));
