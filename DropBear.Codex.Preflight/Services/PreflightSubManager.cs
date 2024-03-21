@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Cysharp.Text;
 using DropBear.Codex.AppLogger.Interfaces;
 using DropBear.Codex.Preflight.Configuration;
 using DropBear.Codex.Preflight.Enums;
@@ -22,6 +23,14 @@ public class PreflightSubManager : IPreflightSubManager
     private readonly ConcurrentQueue<IPreflightTask> _tasks = new();
     private PreflightConfig? _config;
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="PreflightSubManager" /> class.
+    /// </summary>
+    /// <param name="publisher">The publisher for state change notifications.</param>
+    /// <param name="stateSubscriber">The subscriber for task state change notifications.</param>
+    /// <param name="progressSubscriber">The subscriber for task progress change notifications.</param>
+    /// <param name="errorSubscriber">The subscriber for task error notifications.</param>
+    /// <param name="logger">The logger instance.</param>
     public PreflightSubManager(
         IPublisher<SubManagerStateChange> publisher,
         ISubscriber<TaskStateMessage> stateSubscriber,
@@ -40,16 +49,19 @@ public class PreflightSubManager : IPreflightSubManager
         ChangeState(TaskState.Pending); // Initialize state to Pending upon creation
     }
 
+    /// <inheritdoc />
     public string Id { get; }
 
+    /// <inheritdoc />
     public void AddTask(IPreflightTask task)
     {
         ArgumentNullException.ThrowIfNull(task, nameof(task));
         if (_config != null) task.ApplyConfig(_config);
         _tasks.Enqueue(task);
-        _logger.LogInformation($"Task {task.Id} added to sub-manager {Id}.");
+        _logger.LogInformation(ZString.Format("Task {0} added to sub-manager {1}.", task.Id, Id));
     }
 
+    /// <inheritdoc />
     public void Configure(PreflightConfig config)
     {
         _config = config ?? throw new ArgumentNullException(nameof(config));
@@ -58,6 +70,7 @@ public class PreflightSubManager : IPreflightSubManager
         foreach (var task in _tasks) task.ApplyConfig(config);
     }
 
+    /// <inheritdoc />
     public async Task<bool> ExecuteTasksAsync(CancellationToken cancellationToken)
     {
         ChangeState(TaskState.Running);
@@ -75,11 +88,12 @@ public class PreflightSubManager : IPreflightSubManager
         return overallSuccess;
     }
 
+    // Subscribe to task state, progress, and error messages
     private void SubscribeToMessages()
     {
         _stateSubscriber.Subscribe(message =>
         {
-            _logger.LogInformation($"Task {message.TaskId} changed state to {message.State}.");
+            _logger.LogInformation(ZString.Format("Task {0} changed state to {1}.", message.TaskId, message.State));
 
             // Example: Updating internal state or UI based on task state change
             switch (message.State)
@@ -102,7 +116,8 @@ public class PreflightSubManager : IPreflightSubManager
 
         _progressSubscriber.Subscribe(message =>
         {
-            _logger.LogInformation($"Task {message.TaskId} progress updated to {message.Progress:P}.");
+            _logger.LogInformation(ZString.Format("Task {0} progress updated to {1:P}.", message.TaskId,
+                message.Progress));
 
             // Example: Updating progress bar or equivalent UI element
             // UpdateProgressBar(message.TaskId, message.Progress);
@@ -110,7 +125,8 @@ public class PreflightSubManager : IPreflightSubManager
 
         _errorSubscriber.Subscribe(message =>
         {
-            _logger.LogError($"Task {message.TaskId} encountered an error: {message.Error.Message}");
+            _logger.LogError(
+                ZString.Format("Task {0} encountered an error: {1}", message.TaskId, message.Error.Message));
 
             // Example: Handling specific error types differently
             // if (message.Error is SpecificExceptionType)
@@ -120,10 +136,7 @@ public class PreflightSubManager : IPreflightSubManager
         });
     }
 
-    /// <summary>
-    ///     Changes the state of the sub-manager, publishing the change to interested parties.
-    /// </summary>
-    /// <param name="newState">The new state of the sub-manager.</param>
+    // Publish sub-manager state change
     private void ChangeState(TaskState newState)
     {
         _publisher.Publish(new SubManagerStateChange(Id, newState));

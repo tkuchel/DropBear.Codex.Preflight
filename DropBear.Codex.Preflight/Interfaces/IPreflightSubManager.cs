@@ -8,11 +8,12 @@ namespace DropBear.Codex.Preflight.Interfaces;
 public interface IPreflightSubManager
 {
     string Id { get; }
-    
+
     /// <summary>
     ///     Adds a preflight task to the sub-manager.
     /// </summary>
     /// <param name="task">The task to add.</param>
+    // ReSharper disable once UnusedMember.Global
     void AddTask(IPreflightTask task);
 
     /// <summary>
@@ -20,6 +21,7 @@ public interface IPreflightSubManager
     /// </summary>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation, containing the result of the execution.</returns>
+    // ReSharper disable once UnusedMember.Global
     Task<bool> ExecuteTasksAsync(CancellationToken cancellationToken);
 
     /// <summary>

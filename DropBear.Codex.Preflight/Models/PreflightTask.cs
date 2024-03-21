@@ -6,13 +6,25 @@ using MessagePipe;
 
 namespace DropBear.Codex.Preflight.Models;
 
+/// <summary>
+///     Base class for preflight tasks, providing common functionality and properties.
+/// </summary>
+// ReSharper disable once UnusedType.Global
 public abstract class BasePreflightTask : IPreflightTask
 {
     private readonly IPublisher<TaskErrorMessage> _errorPublisher;
     private readonly IPublisher<TaskProgressMessage> _progressPublisher;
     private readonly IPublisher<TaskStateMessage> _statePublisher;
 
-    public BasePreflightTask(
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="BasePreflightTask" /> class.
+    /// </summary>
+    /// <param name="id">The identifier of the task.</param>
+    /// <param name="statePublisher">The publisher for task state change notifications.</param>
+    /// <param name="progressPublisher">The publisher for task progress change notifications.</param>
+    /// <param name="errorPublisher">The publisher for task error notifications.</param>
+    /// <param name="mustSucceed">Specifies whether the task must succeed for the overall process to succeed.</param>
+    protected BasePreflightTask(
         string id,
         IPublisher<TaskStateMessage> statePublisher,
         IPublisher<TaskProgressMessage> progressPublisher,
@@ -24,19 +36,26 @@ public abstract class BasePreflightTask : IPreflightTask
         _progressPublisher = progressPublisher ?? throw new ArgumentNullException(nameof(progressPublisher));
         _errorPublisher = errorPublisher ?? throw new ArgumentNullException(nameof(errorPublisher));
         MustSucceed = mustSucceed;
-        MaxRetryAttempts = 3; 
-        RetryDelay = TimeSpan.FromSeconds(1); 
+        MaxRetryAttempts = 3;
+        RetryDelay = TimeSpan.FromSeconds(1);
     }
 
+    /// <inheritdoc />
     public string Id { get; }
-    public TaskState State { get; protected set; }
+
+    /// <inheritdoc />
+    public TaskState State { get; private set; }
+
+    /// <inheritdoc />
     public bool MustSucceed { get; }
-    public int MaxRetryAttempts { get; protected set; }
-    public TimeSpan RetryDelay { get; protected set; }
 
-    // Abstract method that derived classes will implement with their specific task logic.
-    protected abstract Task<bool> ExecuteTaskAsync(CancellationToken cancellationToken);
+    /// <inheritdoc />
+    public int MaxRetryAttempts { get; private set; }
 
+    /// <inheritdoc />
+    public TimeSpan RetryDelay { get; private set; }
+
+    /// <inheritdoc />
     public async Task<bool> ExecuteWithRetryAsync(CancellationToken cancellationToken)
     {
         for (var attempt = 0; attempt < MaxRetryAttempts; attempt++)
@@ -63,13 +82,18 @@ public abstract class BasePreflightTask : IPreflightTask
                     await Task.Delay(RetryDelay, cancellationToken).ConfigureAwait(false);
             }
         }
+
         return false;
     }
 
+    /// <inheritdoc />
     public void ApplyConfig(PreflightConfig config)
     {
         ArgumentNullException.ThrowIfNull(config, nameof(config));
         MaxRetryAttempts = config.MaxRetryAttempts;
         RetryDelay = config.RetryDelay;
     }
+
+    // Abstract method that derived classes will implement with their specific task logic.
+    protected abstract Task<bool> ExecuteTaskAsync(CancellationToken cancellationToken);
 }

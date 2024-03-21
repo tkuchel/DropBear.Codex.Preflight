@@ -21,16 +21,19 @@ public interface IPreflightTask
     /// <summary>
     ///     Gets the maximum number of retry attempts for executing the task.
     /// </summary>
+    // ReSharper disable once UnusedMemberInSuper.Global
     int MaxRetryAttempts { get; }
 
     /// <summary>
     ///     Gets the delay between retry attempts.
     /// </summary>
+    // ReSharper disable once UnusedMemberInSuper.Global
     TimeSpan RetryDelay { get; }
 
     /// <summary>
     ///     Gets the current state of the task.
     /// </summary>
+    // ReSharper disable once UnusedMemberInSuper.Global
     TaskState State { get; }
 
     /// <summary>

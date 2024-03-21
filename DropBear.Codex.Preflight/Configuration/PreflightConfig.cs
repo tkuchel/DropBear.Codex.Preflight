@@ -40,6 +40,7 @@ public class PreflightConfig
     /// </summary>
     /// <param name="maxRetryAttempts">The maximum number of retry attempts. Must be non-negative.</param>
     /// <param name="retryDelay">The delay between retry attempts. Must be non-negative.</param>
+    // ReSharper disable once UnusedMember.Global
     public void UpdateRetrySettings(int maxRetryAttempts, TimeSpan retryDelay)
     {
         if (maxRetryAttempts < 0)
@@ -56,6 +57,7 @@ public class PreflightConfig
     ///     Sets the task timeout, ensuring the value is positive.
     /// </summary>
     /// <param name="taskTimeout">The maximum timeout for a task to complete.</param>
+    // ReSharper disable once UnusedMember.Global
     public void SetTaskTimeout(TimeSpan taskTimeout)
     {
         if (taskTimeout <= TimeSpan.Zero)
