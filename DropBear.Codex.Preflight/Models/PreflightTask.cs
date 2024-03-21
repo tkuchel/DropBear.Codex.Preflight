@@ -19,19 +19,17 @@ public abstract class BasePreflightTask : IPreflightTask
     /// <summary>
     ///     Initializes a new instance of the <see cref="BasePreflightTask" /> class.
     /// </summary>
-    /// <param name="id">The identifier of the task.</param>
     /// <param name="statePublisher">The publisher for task state change notifications.</param>
     /// <param name="progressPublisher">The publisher for task progress change notifications.</param>
     /// <param name="errorPublisher">The publisher for task error notifications.</param>
     /// <param name="mustSucceed">Specifies whether the task must succeed for the overall process to succeed.</param>
     protected BasePreflightTask(
-        string id,
         IPublisher<TaskStateMessage> statePublisher,
         IPublisher<TaskProgressMessage> progressPublisher,
         IPublisher<TaskErrorMessage> errorPublisher,
         bool mustSucceed = true)
     {
-        Id = id ?? throw new ArgumentNullException(nameof(id));
+        Id = Guid.NewGuid().ToString();
         _statePublisher = statePublisher ?? throw new ArgumentNullException(nameof(statePublisher));
         _progressPublisher = progressPublisher ?? throw new ArgumentNullException(nameof(progressPublisher));
         _errorPublisher = errorPublisher ?? throw new ArgumentNullException(nameof(errorPublisher));

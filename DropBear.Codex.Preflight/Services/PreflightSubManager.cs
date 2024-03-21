@@ -45,6 +45,8 @@ public class PreflightSubManager : IPreflightSubManager
         _errorSubscriber = errorSubscriber ?? throw new ArgumentNullException(nameof(errorSubscriber));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
+        _logger.LogDebug(ZString.Format("PreflightSubManager {0} initialized.", Id));
+
         SubscribeToMessages();
         ChangeState(TaskState.Pending); // Initialize state to Pending upon creation
     }
@@ -56,7 +58,12 @@ public class PreflightSubManager : IPreflightSubManager
     public void AddTask(IPreflightTask task)
     {
         ArgumentNullException.ThrowIfNull(task, nameof(task));
-        if (_config != null) task.ApplyConfig(_config);
+        if (_config != null)
+        {
+            task.ApplyConfig(_config);
+            _logger.LogInformation(ZString.Format("Config applied to task {0} in sub-manager {1}.", task.Id, Id));
+        }
+
         _tasks.Enqueue(task);
         _logger.LogInformation(ZString.Format("Task {0} added to sub-manager {1}.", task.Id, Id));
     }
@@ -65,80 +72,65 @@ public class PreflightSubManager : IPreflightSubManager
     public void Configure(PreflightConfig config)
     {
         _config = config ?? throw new ArgumentNullException(nameof(config));
+        _logger.LogDebug($"Configuring PreflightSubManager {Id}.");
 
-        // Apply the configuration to all tasks in the sub-manager
-        foreach (var task in _tasks) task.ApplyConfig(config);
+        foreach (var task in _tasks)
+        {
+            task.ApplyConfig(config);
+            _logger.LogDebug(ZString.Format("Task {0} configured in sub-manager {1}.", task.Id, Id));
+        }
     }
 
     /// <inheritdoc />
     public async Task<bool> ExecuteTasksAsync(CancellationToken cancellationToken)
     {
+        _logger.LogInformation($"PreflightSubManager {Id} starting task execution.");
         ChangeState(TaskState.Running);
         var overallSuccess = true;
 
         while (_tasks.TryDequeue(out var task))
         {
+            _logger.LogInformation(ZString.Format("Executing task {0} in sub-manager {1}.", task.Id, Id));
             var success = await task.ExecuteWithRetryAsync(cancellationToken);
             if (success || !task.MustSucceed) continue;
-            overallSuccess = false; // Mark overall failure if any must-succeed task fails
+            overallSuccess = false;
+            _logger.LogWarning(ZString.Format("Task {0} critical failure in sub-manager {1}.", task.Id, Id));
             break; // Optional: Stop execution on first critical failure
         }
 
         ChangeState(overallSuccess ? TaskState.Completed : TaskState.Failed);
+        _logger.LogInformation($"PreflightSubManager {Id} completed task execution with status: {overallSuccess}.");
         return overallSuccess;
     }
 
     // Subscribe to task state, progress, and error messages
     private void SubscribeToMessages()
     {
+        _logger.LogDebug($"Subscribing to messages in PreflightSubManager {Id}.");
+
         _stateSubscriber.Subscribe(message =>
         {
-            _logger.LogInformation(ZString.Format("Task {0} changed state to {1}.", message.TaskId, message.State));
-
-            // Example: Updating internal state or UI based on task state change
-            switch (message.State)
-            {
-                case TaskState.Running:
-                    // Code to handle running state
-                    break;
-                case TaskState.Completed:
-                    // Code to handle task completion
-                    break;
-                case TaskState.Failed:
-                    // Code to handle task failure
-                    break;
-                case TaskState.Pending:
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            _logger.LogInformation(ZString.Format("Task {0} changed state to {1} in sub-manager {2}.",
+                message.TaskId, message.State, Id));
         });
 
         _progressSubscriber.Subscribe(message =>
         {
-            _logger.LogInformation(ZString.Format("Task {0} progress updated to {1:P}.", message.TaskId,
-                message.Progress));
-
-            // Example: Updating progress bar or equivalent UI element
-            // UpdateProgressBar(message.TaskId, message.Progress);
+            _logger.LogInformation(ZString.Format("Task {0} progress updated to {1:P} in sub-manager {2}.",
+                message.TaskId, message.Progress, Id));
         });
 
         _errorSubscriber.Subscribe(message =>
         {
-            _logger.LogError(
-                ZString.Format("Task {0} encountered an error: {1}", message.TaskId, message.Error.Message));
-
-            // Example: Handling specific error types differently
-            // if (message.Error is SpecificExceptionType)
-            // {
-            //     // Handle specific error, e.g., retry task or notify user
-            // }
+            _logger.LogError(ZString.Format("Task {0} encountered an error in sub-manager {1}: {2}", message.TaskId,
+                Id, message.Error.Message));
         });
     }
 
     // Publish sub-manager state change
     private void ChangeState(TaskState newState)
     {
+        _logger.LogDebug(ZString.Format("Sub-manager {0} changing state to {1}.", Id, newState));
         _publisher.Publish(new SubManagerStateChange(Id, newState));
     }
 }
